@@ -11,6 +11,8 @@ import CoreData
 class SecondViewController: UIViewController,UITableViewDataSource ,UITableViewDelegate {
     var nameArray = [String]()
     var idArray = [UUID]()
+    var SelectedName = ""
+    var SelectedId : UUID?
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return nameArray.count
@@ -33,11 +35,16 @@ class SecondViewController: UIViewController,UITableViewDataSource ,UITableViewD
         super.viewDidLoad()
         tableView.dataSource = self
         tableView.delegate = self
-
+        
         getData()
+    }
+    override func viewWillAppear(_ animated: Bool) {
+    NotificationCenter.default.addObserver(self, selector: #selector(getData), name: NSNotification.Name(rawValue: "newData"), object: nil)
         
     }
-    func getData(){
+    @objc func getData() {
+        nameArray.removeAll(keepingCapacity: false)
+        idArray.removeAll(keepingCapacity: false)
         let appDelete = UIApplication.shared.delegate as! AppDelegate
         let context = appDelete.persistentContainer.viewContext
         
@@ -51,13 +58,26 @@ class SecondViewController: UIViewController,UITableViewDataSource ,UITableViewD
                 if let id = result.value(forKey: "id"){
                     idArray.append(id as! UUID)
                 }
-                print(idArray)
 
             }
         } catch {
             print("error")
         }
+        tableView.reloadData()
     }
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        SelectedId = idArray[indexPath.row]
+        performSegue(withIdentifier: "toThirdVC", sender: nil)
+        
+    }
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "toThirdVC"{
+            let destinationVC = segue.destination as? ThirdViewController
+            destinationVC?.ChosenId=SelectedId
+        }
+    }
+    
+    
     @objc func addButtonClicked(){
         performSegue(withIdentifier: "toView", sender: nil)
         
